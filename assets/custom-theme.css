@@ -1,0 +1,50 @@
+.page_background{
+    background-color: rgb(92, 92, 92);
+}
+.graph_1_column{
+    background-color:cornsilk;
+}
+.graph_title_text{
+    text-align: center;
+    color: white;
+    padding-bottom: 10px;
+}
+.top_banner{
+    padding-top: 50px;
+    text-align: center;
+    color: white;
+}
+.intro_text{
+    text-align: center;
+    color: white
+}
+.row{
+    padding-left: 20px;
+    padding-right: 20px;
+}
+.general_text{
+    text-align: left;
+    color: white;
+}
+.general_text, .intro_text, .graph_title_text, .top_banner, .selector{
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    color: white;
+}
+.selector{
+    background-color: rgb(92, 92, 92);
+}
+.slider{
+    width: 60%;
+    margin: auto;
+    border-color: red;
+}
+.slider-disabled{
+    background-color: rgb(243, 23, 23);
+}
+.slider-div{
+    margin: auto;
+}
+.graph{
+    background-color: rgb(92, 92, 92);
+}
