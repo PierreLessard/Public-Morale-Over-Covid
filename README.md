@@ -12,6 +12,10 @@ source venv/bin/activate
 ```
 
 To install all dependencies, run:
+<<<<<<< HEAD
 ```
 pip install -r requirements.txt
 ```
+=======
+```pip install -r requirements.txt```
+>>>>>>> 5dd1683cd251cff48be14cc7aab02ec5cb02a377
