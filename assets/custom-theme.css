@@ -8,10 +8,16 @@
     color: white;
     padding-bottom: 10px;
 }
+.main_graph{
+    width: 95%;
+    margin: auto;
+    border-radius: 5px;
+}
 .top_banner{
     line-height: 1500%;
-    height: 80%;
+    height: 100%;
     text-align: center;
+    padding-bottom: 10%;
     color: white;
     font-size: 85px;
     animation: fadein 4s;

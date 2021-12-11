@@ -1,6 +1,6 @@
-""" Data visualization"""
+"""Data visualization using Dash and plotly express: https://dash.plotly.com
+"""
 import plotly.express as px
-import plotly.io as pio
 import pandas as pd
 import dash
 import time
@@ -9,7 +9,9 @@ from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
 from util import data_loading
+from util import graph_updater
 
+# Using dbc for specific components: https://dash-bootstrap-components.opensource.faculty.ai
 import dash_bootstrap_components as dbc
 
 # remove upon completion
@@ -20,10 +22,6 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.BOOTSTRAP, data_loading.read_style_sheet()],
 )
 app.title = "Pandemic's Impact on the Public Sentiment"
-
-
-pio.templates.default = "seaborn"
-
 
 months = [
     "Jan",
@@ -41,271 +39,155 @@ months = [
 ]
 
 # Data loading
-df = data_loading.read_data()
-
+data_sets = data_loading.read_data()
+data_loading.clean_data(data_sets)
 
 # App layout
+def row_builder(row_number) -> dbc.Row:
+    """
+    Builds a standard row based on row_number
+    """
+    return dbc.Row(
+        className="row",
+        justify="around",
+        children=[
+            dbc.Col(
+                id=f"graph-{row_number}-column",
+                className="column",
+                width=5,
+                children=[
+                    html.H5(
+                        id=f"graph-{row_number}-title",
+                        className="graph_title_text",
+                    ),
+                    dcc.Graph(
+                        id=f"graph-{row_number}",
+                    ),
+                ],
+            ),
+            dbc.Col(
+                id=f"graph-{row_number}-stats-column",
+                className="column",
+                width=3,
+                children=[
+                    html.H5(
+                        className="graph_title_text", children="Statistics"
+                    ),
+                    dcc.Graph(id=f"graph-{row_number}-stats", style={"width": "auto"}),
+                ],
+            ),
+            dbc.Col(
+                id=f"graph-{row_number}-config-column",
+                className="column",
+                width=2,
+                children=[
+                    html.H5(
+                        className="graph_title_text",
+                        children="Configuration",
+                    ),
+                    html.P("Source Selection", className="general_text"),
+                    # TODO: Replace all options with comprehension
+                    dbc.Select(
+                        id=f"source-{row_number}",
+                        className="selector",
+                        options=[{'label': name, 'value': name} for name in data_sets],
+                        value=list(data_sets)[0],
+                    ),
+                    html.Br(),
+                    html.P("Model Selection", className="general_text"),
+                    dbc.Select(
+                        id=f"data-{row_number}",
+                        className="selector",
+                        options=[{'label': f'Trained at {p}', 'value': f'{p}%'} for p in [25, 50, 75, 100]],
+                        value=25,
+                    ),
+                    html.Br(),
+                    html.P("Location selection", className="general_text"),
+                    dbc.Select(
+                        id=f"location-{row_number}",
+                        className="selector",
+                        options=[
+                            {"label": "Canada", "value": "Canada"},
+                            {
+                                "label": "United States",
+                                "value": "United States",
+                            },
+                        ],
+                        value="Canada",
+                    ),
+                    html.Br(),
+                    html.P("Year Selection", className="general_text"),
+                    dbc.Select(
+                        id=f"year-{row_number}",
+                        className="selector",
+                        options=[{'label': f'{year}', 'value': year} for year in [2021, 2021]],
+                        value=2021,
+                    ),
+                    html.Br(),
+                    html.Div(
+                        dbc.Spinner(
+                            html.Div(id=f"loading-output-{row_number}"), color="light"
+                        )
+                    ),
+                ],
+            ),
+        ],
+    )
+
+# initiate the rows
+row1 = row_builder(1)
+row2 = row_builder(2)
+row3 = row_builder(3)
+row4 = row_builder(4)
+divider = html.Div(style={"height": "100px"})
+
 app.layout = html.Div(
     id="root",
     className="page_background",
     children=[
-        # Header
-        html.H1(
-            id="banner",
-            className="top_banner",
-            children=[
-                "Pandemic’s Impact on the Sentiment of the Public",
-            ],
-        ),
-        html.Div(
-            id="project-description",
-            children=[
-                html.H5(
-                    className="intro_text",
-                    children=[
-                        html.H5(
-                            "This project uses machine learning to analyse the sentiments of the public with respect to new daily cases."
-                        ),
-                        html.H5(
-                            "The data is collected from the comment sections from a wide range of sources, including news & social media comments"
-                        ),
-                        html.H5(
-                            "Select & configure multiple graphs at once to compare our findings"
-                        ),
-                        html.Br(),
-                    ],
-                ),
-            ],
-        ),
-        html.Br(),
         html.Div(
             id="body",
             className="body",
             children=[
-                dbc.Row(
-                    className="row",
-                    justify="around",
+                html.H1(
+                    id="banner",
+                    className="top_banner",
                     children=[
-                        dbc.Col(
-                            id="graph-1-column",
-                            # TODO: remove children in the body and get it directly from callbacks
-                            className="column",
-                            width=5,
-                            children=[
-                                # update this value
-                                # might move all of them into a function
-                                html.H5(
-                                    id="graph-1-title",
-                                    className="graph_title_text",
-                                ),
-                                dcc.Graph(
-                                    id="graph-1",
-                                ),
-                            ],
-                        ),
-                        dbc.Col(
-                            id="graph-1-stats-column",
-                            className="column",
-                            width=3,
-                            children=[
-                                html.H5(
-                                    className="graph_title_text", children="Statistics"
-                                ),
-                                dcc.Graph(id="graph-1-stats", style={"width": "auto"}),
-                            ],
-                        ),
-                        dbc.Col(
-                            id="graph-1-config-column",
-                            className="column",
-                            width=2,
-                            children=[
-                                html.H5(
-                                    className="graph_title_text",
-                                    children="Configuration",
-                                ),
-                                html.P("Source selection", className="general_text"),
-                                # TODO: Replace all options with comprehension
-                                dbc.Select(
-                                    id="source-1",
-                                    className="selector",
-                                    options=[
-                                        {"label": "Fox", "value": "Fox"},
-                                        {"label": "Instagram", "value": "Instagram"},
-                                    ],
-                                    value="Fox",
-                                ),
-                                html.Br(),
-                                html.P("Data selection", className="general_text"),
-                                dbc.Select(
-                                    id="data-1",
-                                    className="selector",
-                                    options=[
-                                        {"label": "Raw", "value": "Raw"},
-                                        {
-                                            "label": "ML Linear Regression",
-                                            "value": "Linear Regression",
-                                        },
-                                    ],
-                                    value="Raw",
-                                ),
-                                html.Br(),
-                                html.P("Location selection", className="general_text"),
-                                dbc.Select(
-                                    id="location-1",
-                                    className="selector",
-                                    options=[
-                                        {"label": "Canada", "value": "Canada"},
-                                        {
-                                            "label": "United States",
-                                            "value": "United States",
-                                        },
-                                    ],
-                                    value="Canada",
-                                ),
-                                html.Br(),
-                                html.P("Year selection", className="general_text"),
-                                dbc.Select(
-                                    id="year-1",
-                                    className="selector",
-                                    options=[
-                                        {"label": "2021", "value": 2021},
-                                        {
-                                            "label": "2020",
-                                            "value": 2020,
-                                        },
-                                    ],
-                                    value=2021,
-                                ),
-                                html.Br(),
-                                html.Div(
-                                    dbc.Spinner(
-                                        html.Div(id="loading-output-1"), color="light"
-                                    )
-                                ),
-                            ],
-                        ),
-                        # For example, we can diplay some statistics about a given state
-                        # like max, min, average sentimement.
+                        "Pandemic’s Impact on the Sentiment of the Public",
                     ],
                 ),
-                html.Div(style={"height": "100px"}),
-                dbc.Row(
-                    className="row",
-                    justify="around",
+                html.Div(
+                    id="project-description",
                     children=[
-                        dbc.Col(
-                            id="graph-2-column",
-                            # TODO: remove children in the body and get it directly from callbacks
-                            className="column",
-                            width=5,
-                            children=[
-                                # update this value
-                                html.H5(
-                                    id="graph-2-title",
-                                    className="graph_title_text",
-                                ),
-                                dcc.Graph(
-                                    id="graph-2",
-                                ),
-                            ],
-                        ),
-                        dbc.Col(
-                            id="graph-2-stats-column",
-                            className="column",
-                            width=3,
+                        html.H5(
+                            className="intro_text",
                             children=[
                                 html.H5(
-                                    className="graph_title_text", children="Statistics"
+                                    "This project uses machine learning to analyse the sentiments of the public with respect to new daily cases."
                                 ),
-                                dcc.Graph(
-                                    id="graph-2-stats",
-                                ),
-                            ],
-                        ),
-                        dbc.Col(
-                            id="graph-2-config-column",
-                            className="column",
-                            width=2,
-                            children=[
                                 html.H5(
-                                    className="graph_title_text",
-                                    children="Configuration",
+                                    "The data is collected from the comment sections from a wide range of sources, including news & social media comments"
                                 ),
-                                html.P("Source selection", className="general_text"),
-                                # TODO: Replace all options with comprehension
-                                dbc.Select(
-                                    id="source-2",
-                                    className="selector",
-                                    options=[
-                                        {"label": "Fox", "value": "Fox"},
-                                        {"label": "Instagram", "value": "Instagram"},
-                                    ],
-                                    value="Fox",
+                                html.H5(
+                                    "Select & configure multiple graphs at once to compare our findings"
                                 ),
                                 html.Br(),
-                                html.P("Data selection", className="general_text"),
-                                dbc.Select(
-                                    id="data-2",
-                                    className="selector",
-                                    options=[
-                                        {"label": "Raw", "value": "Raw"},
-                                        {
-                                            "label": "ML Linear Regression",
-                                            "value": "Linear Regression",
-                                        },
-                                    ],
-                                    value="Raw",
-                                ),
-                                html.Br(),
-                                html.P("Location selection", className="general_text"),
-                                dbc.Select(
-                                    id="location-2",
-                                    className="selector",
-                                    options=[
-                                        {"label": "Canada", "value": "Canada"},
-                                        {
-                                            "label": "United States",
-                                            "value": "United States",
-                                        },
-                                    ],
-                                    value="Canada",
-                                ),
-                                html.Br(),
-                                html.P("Year selection", className="general_text"),
-                                dbc.Select(
-                                    id="year-2",
-                                    className="selector",
-                                    options=[
-                                        {"label": "2021", "value": 2021},
-                                        {
-                                            "label": "2020",
-                                            "value": 2020,
-                                        },
-                                    ],
-                                    value=2021,
-                                ),
-                                html.Br(),
-                                html.Div(
-                                    dbc.Spinner(
-                                        html.Div(id="loading-output-2"), color="light"
-                                    )
-                                ),
                             ],
                         ),
-                        # For example, we can diplay some statistics about a given state
-                        # like max, min, average sentimement.
                     ],
                 ),
-                html.Div(style={"height": "100px"}),
+                html.Br(),                
+                html.H3(className="graph_title_text", children="Machine Learning Model Loss vs. Iteration"),
+                dbc.Row(className="row", children=[graph_updater.update_main_graph(data_sets)], id="main-graph-container"),
+                divider, row1, divider, row2, divider, row3, divider, row4, divider,
                 dcc.Store(id="intermediate-value"),
             ],
-        ),
-    ],
+        )
+    ]
 )
 
-
 # User interactions
-# need one for each indiviudal graph
+
 @app.callback(
     Output("loading-output-1", "children"),
     [
@@ -316,7 +198,8 @@ app.layout = html.Div(
     ],
 )
 def load_output(a, b, c, d):
-    if a:
+    """Animation of the loading symbol"""
+    if a or b or c or d:
         time.sleep(1)
 
 
@@ -333,44 +216,16 @@ def load_output(a, b, c, d):
         Input("year-1", "value"),
     ],
 )
-def update_graph(source, data, location, year):
+def update_graph_1(data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
     """A generic function that can be used to update all graphs based on user input
 
-    The input day_range can be used directly in the index of df, assuming that
-    there is one row of data for each day.
-
-    Returns a graph object
+    Returns a title and two graph objects, one for the main graph and one for statistics.
     """
-    # We will always update everything in that row one element changes
 
-    # We will filter the data and get the correct ones to pass into the graphs
-    # Probabily have the helper functions in .util
-
-    # we need to fix the days in time series, change the x only indiciate months
-    # convert day into panda datetime so that we can get the corresponding range of data
-    title = f"{data} representation of data from {source} in {location}"
-    main_graph = px.line(
-        df["PortionOfCovidCaseDataset.csv"],
-        x="Date",
-        y="New Cases",
+    title = f"Model trained at {data_state} applied to data from {data_source}"
+    main_graph, stats_graph = graph_updater.generate_graph(
+        data_sets, data_source, data_state, location, year
     )
-    stat_df = pd.DataFrame(
-        index=["Max", "Min", "Mean"],
-        data={
-            "Cases": [
-                df["PortionOfCovidCaseDataset.csv"].loc[:, "New Cases"].max(),
-                df["PortionOfCovidCaseDataset.csv"].loc[:, "New Cases"].min(),
-                df["PortionOfCovidCaseDataset.csv"].loc[:, "New Cases"].mean(),
-            ]
-        },
-    )
-    logging.debug(stat_df)
-    stats_graph = px.bar(
-        stat_df,
-        x=["Max", "Min", "Mean"],
-        y="Cases",
-    )
-
     return title, main_graph, stats_graph
 
 
@@ -384,7 +239,7 @@ def update_graph(source, data, location, year):
     ],
 )
 def load_output(a, b, c, d):
-    if a:
+    if a or b or c or d:
         time.sleep(1)
 
 
@@ -401,48 +256,82 @@ def load_output(a, b, c, d):
         Input("year-2", "value"),
     ],
 )
-def update_graph(source, data, location, year):
-    """A generic function that can be used to update all graphs based on user input
-
-    The input day_range can be used directly in the index of df, assuming that
-    there is one row of data for each day.
-
-    Returns a graph object
-    """
-    # We will always update everything in that row one element changes
-
-    # We will filter the data and get the correct ones to pass into the graphs
-    # Probabily have the helper functions in .util
-
-    # we need to fix the days in time series, change the x only indiciate months
-    # convert day into panda datetime so that we can get the corresponding range of data
-    title = f"{data} representation of data from {source} in {location}"
-    main_graph = px.line(
-        df["PortionOfCovidCaseDataset.csv"],
-        x="Date",
-        y="New Cases",
+def update_graph_1(data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
+    title = f"Model trained at {data_state} applied to data from {data_source}"
+    main_graph, stats_graph = graph_updater.generate_graph(
+        data_sets, data_source, data_state, location, year
     )
-    stat_df = pd.DataFrame(
-        index=["Max", "Min", "Mean"],
-        data={
-            "Cases": [
-                df["PortionOfCovidCaseDataset.csv"].loc[:, "New Cases"].max(),
-                df["PortionOfCovidCaseDataset.csv"].loc[:, "New Cases"].min(),
-                df["PortionOfCovidCaseDataset.csv"].loc[:, "New Cases"].mean(),
-            ]
-        },
-    )
-    logging.debug(stat_df)
-    stats_graph = px.bar(
-        stat_df,
-        x=["Max", "Min", "Mean"],
-        y="Cases",
-    )
-
     return title, main_graph, stats_graph
 
 
-# duplicate the code above three more times to allow users see multiple graphs at once.
+@app.callback(
+    Output("loading-output-3", "children"),
+    [
+        Input("source-3", "value"),
+        Input("data-3", "value"),
+        Input("location-3", "value"),
+        Input("year-3", "value"),
+    ],
+)
+def load_output(a, b, c, d):
+    if a or b or c or d:
+        time.sleep(1)
+
+
+@app.callback(
+    [
+        Output("graph-3-title", "children"),
+        Output("graph-3", "figure"),
+        Output("graph-3-stats", "figure"),
+    ],
+    [
+        Input("source-3", "value"),
+        Input("data-3", "value"),
+        Input("location-3", "value"),
+        Input("year-3", "value"),
+    ],
+)
+def update_graph_1(data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
+    title = f"Model trained at {data_state} applied to data from {data_source}"
+    main_graph, stats_graph = graph_updater.generate_graph(
+        data_sets, data_source, data_state, location, year
+    )
+    return title, main_graph, stats_graph
+
+@app.callback(
+    Output("loading-output-4", "children"),
+    [
+        Input("source-4", "value"),
+        Input("data-4", "value"),
+        Input("location-4", "value"),
+        Input("year-4", "value"),
+    ],
+)
+def load_output(a, b, c, d):
+    if a or b or c or d:
+        time.sleep(1)
+
+
+@app.callback(
+    [
+        Output("graph-4-title", "children"),
+        Output("graph-4", "figure"),
+        Output("graph-4-stats", "figure"),
+    ],
+    [
+        Input("source-4", "value"),
+        Input("data-4", "value"),
+        Input("location-4", "value"),
+        Input("year-4", "value"),
+    ],
+)
+def update_graph_1(data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
+    title = f"Model trained at {data_state} applied to data from {data_source}"
+    main_graph, stats_graph = graph_updater.generate_graph(
+        data_sets, data_source, data_state, location, year
+    )
+    return title, main_graph, stats_graph
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
