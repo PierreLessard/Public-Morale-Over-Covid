@@ -10,6 +10,7 @@ import pickle
 from spacy.util import minibatch, compounding
 from spacy.tokenizer import Tokenizer
 from spacy.pipeline import Morphologizer
+import csv
 
 def format_training_data(direc: str = "data/training/aclImdb/train") -> None:
     """
@@ -52,12 +53,14 @@ def grab_training_data(shuffle: bool = False, direc: str = 'data/training/movie_
         
     return shuffle_training_data(reviews) if shuffle else tuple(reviews)
 
+
 def save_model(nlp, optimizer, training_data, test_data, directory: str= 'models/sentiment/model_artifacts') -> None:
     """saves the given model"""
 
     with nlp.use_params(optimizer.averages):
         nlp.to_disk(directory)
         print(f"Model Saved to {directory}")
+
 
 def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
     """
@@ -97,25 +100,27 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
             with textcat.model.use_params(optimizer.averages):
                 results = evaluate_model(nlp.tokenizer, textcat, test_data)
 
-            print(f'Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
-            results_txt.append('Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
+            txt_wrp = f'Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]}, F-Score: {results["f-score"]}, loss:{loss["textcat"]}.'
+            print(txt_wrp,end=' ')
+            results_txt.append(txt_wrp)
+            write_data_to_csv(results, loss, i)
+
             # uncomment to save model "BE CAREFUL MAY DESTROY PREVIOUS MODEL"
             save_model(nlp, optimizer, training_data, test_data, f'models/sentiment/models/model{i+1}')
         
-        with open('models/sentiment/models/results.txt', 'w') as f:
+        with open('models/sentiment/results.txt', 'w') as f:
             for result in results_txt:
                 f.write(result+'\n')
         
         
-        
-
 def evaluate_model(tokenizer: Tokenizer, textcat: Morphologizer, test_data: list) -> dict:
     """
     evaluate the model to see if it is worthwhile to save the model
     """
     true_positives = true_negatives =  0
-    false_positives = false_negatives = 1e-8  # near 0 to avoid /0
-    for score, true_label in zip(*map(lambda x: (textcat.pipe(tokenizer(x[0])).cats['pos'], x[1]['cats']),test_data)):
+    false_positives = false_negatives = 1e-8  # near 0 to avoid /0 $$ textcat.pipe(tokenizer(x[0])).cats['pos'],
+    tokens, labels = zip(*map(lambda x: (tokenizer(x[0]), x[1]['cats']), test_data))
+    for score, true_label in zip([i.cats['pos'] for i in textcat.pipe(tokens)], labels):
         if score >= 0.5 and true_label["pos"]:
             true_positives += 1
         elif score >= 0.5 and true_label["neg"]:
@@ -131,9 +136,22 @@ def evaluate_model(tokenizer: Tokenizer, textcat: Morphologizer, test_data: list
     f_score = 2 * (precision * recall) / (precision + recall) if precision + recall else 0
     return {"precision": precision, "recall": recall, "f-score": f_score}
 
-        
+def write_data_to_csv(data: dict, loss: dict , count: int, csv_direc: str = 'models/sentiment/evaluations.csv') -> None:
+    
+    new_row = [count, loss['textcat'], data['precision'], data['recall'], data['f-score']]
+    if not count:
+        fields = ["MODEL NUMBER", "LOSS", "PRECISION", "RECALL", "F-SCORE"]
+        with open(csv_direc, 'w', newline='') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(fields)
+            csvwriter.writerow(new_row)
+    else:
+        with open(csv_direc, 'a', newline='') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(new_row)
+
 
 if __name__ == "__main__":
     data = grab_training_data(True)
-    train_model(data[0], data[1], 50)
+    train_model(data[0], data[1], 2)
     
