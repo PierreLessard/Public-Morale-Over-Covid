@@ -1,7 +1,6 @@
 """ Data visualization"""
 import plotly.express as px
 import plotly.io as pio
-import numpy as np
 import pandas as pd
 import dash
 import time
@@ -54,7 +53,9 @@ app.layout = html.Div(
         html.H1(
             id="banner",
             className="top_banner",
-            children="Pandemic’s Impact on the Sentiment of the Public",
+            children=[
+                "Pandemic’s Impact on the Sentiment of the Public",
+            ],
         ),
         html.Div(
             id="project-description",
@@ -62,13 +63,16 @@ app.layout = html.Div(
                 html.H5(
                     className="intro_text",
                     children=[
-                        "This project uses machine learning to analyse the sentiments of the public with respect to new daily cases"
-                    ],
-                ),
-                html.H5(
-                    className="intro_text",
-                    children=[
-                        "The data is collected from the comment sections from a wide range of sources, including news & social media comments"
+                        html.H5(
+                            "This project uses machine learning to analyse the sentiments of the public with respect to new daily cases."
+                        ),
+                        html.H5(
+                            "The data is collected from the comment sections from a wide range of sources, including news & social media comments"
+                        ),
+                        html.H5(
+                            "Select & configure multiple graphs at once to compare our findings"
+                        ),
+                        html.Br(),
                     ],
                 ),
             ],
@@ -76,7 +80,7 @@ app.layout = html.Div(
         html.Br(),
         html.Div(
             id="body",
-            className="Body",
+            className="body",
             children=[
                 dbc.Row(
                     className="row",
@@ -86,6 +90,7 @@ app.layout = html.Div(
                             id="graph-1-column",
                             # TODO: remove children in the body and get it directly from callbacks
                             className="column",
+                            width=5,
                             children=[
                                 # update this value
                                 # might move all of them into a function
@@ -93,12 +98,26 @@ app.layout = html.Div(
                                     id="graph-1-title",
                                     className="graph_title_text",
                                 ),
-                                dcc.Graph(id="graph-1", style={"width": "700px"}),
+                                dcc.Graph(
+                                    id="graph-1",
+                                ),
+                            ],
+                        ),
+                        dbc.Col(
+                            id="graph-1-stats-column",
+                            className="column",
+                            width=3,
+                            children=[
+                                html.H5(
+                                    className="graph_title_text", children="Statistics"
+                                ),
+                                dcc.Graph(id="graph-1-stats", style={"width": "auto"}),
                             ],
                         ),
                         dbc.Col(
                             id="graph-1-config-column",
                             className="column",
+                            width=2,
                             children=[
                                 html.H5(
                                     className="graph_title_text",
@@ -167,19 +186,9 @@ app.layout = html.Div(
                         ),
                         # For example, we can diplay some statistics about a given state
                         # like max, min, average sentimement.
-                        dbc.Col(
-                            id="graph-1-stats-column",
-                            className="column",
-                            children=[
-                                html.H5(
-                                    className="graph_title_text", children="Statistics"
-                                ),
-                                dcc.Graph(id="graph-1-stats", style={"width": "500px"}),
-                            ],
-                        ),
                     ],
                 ),
-                html.Br(),
+                html.Div(style={"height": "100px"}),
                 dbc.Row(
                     className="row",
                     justify="around",
@@ -188,19 +197,35 @@ app.layout = html.Div(
                             id="graph-2-column",
                             # TODO: remove children in the body and get it directly from callbacks
                             className="column",
+                            width=5,
                             children=[
                                 # update this value
-                                # might move all of them into a function
                                 html.H5(
                                     id="graph-2-title",
                                     className="graph_title_text",
                                 ),
-                                dcc.Graph(id="graph-2", style={"width": "700px"}),
+                                dcc.Graph(
+                                    id="graph-2",
+                                ),
+                            ],
+                        ),
+                        dbc.Col(
+                            id="graph-2-stats-column",
+                            className="column",
+                            width=3,
+                            children=[
+                                html.H5(
+                                    className="graph_title_text", children="Statistics"
+                                ),
+                                dcc.Graph(
+                                    id="graph-2-stats",
+                                ),
                             ],
                         ),
                         dbc.Col(
                             id="graph-2-config-column",
                             className="column",
+                            width=2,
                             children=[
                                 html.H5(
                                     className="graph_title_text",
@@ -269,19 +294,9 @@ app.layout = html.Div(
                         ),
                         # For example, we can diplay some statistics about a given state
                         # like max, min, average sentimement.
-                        dbc.Col(
-                            id="graph-2-stats-column",
-                            className="column",
-                            children=[
-                                html.H5(
-                                    className="graph_title_text", children="Statistics"
-                                ),
-                                dcc.Graph(id="graph-2-stats", style={"width": "500px"}),
-                            ],
-                        ),
                     ],
                 ),
-                html.Br(),
+                html.Div(style={"height": "100px"}),
                 dcc.Store(id="intermediate-value"),
             ],
         ),
@@ -300,7 +315,7 @@ app.layout = html.Div(
         Input("year-1", "value"),
     ],
 )
-def load_output(a, b, c ,d):
+def load_output(a, b, c, d):
     if a:
         time.sleep(1)
 

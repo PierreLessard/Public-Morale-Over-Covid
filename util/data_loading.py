@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
 import datetime
 from pathlib import Path
 import dash_bootstrap_components as dbc
