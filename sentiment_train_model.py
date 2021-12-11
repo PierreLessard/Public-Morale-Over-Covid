@@ -51,7 +51,7 @@ def grab_training_data(shuffle: bool = False, direc: str = 'data/training/movie_
         
     return shuffle_training_data(reviews) if shuffle else tuple(reviews)
 
-def save_model(nlp, optimizer, directory: str= 'models/sentiment/model_artifacts') -> None:
+def save_model(nlp, optimizer, training_data, test_data, directory: str= 'models/sentiment/model_artifacts') -> None:
     """saves the given model"""
 
     with nlp.use_params(optimizer.averages):
@@ -75,10 +75,14 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
     textcat.add_label("pos")
     textcat.add_label("neg")
 
+    with open('models/sentiment/models/test_data', 'wb') as f:
+        pickle.dump(test_data, f)
+
     # code to exclude useless pipes from training
     with nlp.disable_pipes([pipe for pipe in nlp.pipe_names if pipe!="textcat"]):
         optimizer = nlp.begin_training()
         batch_sizes = compounding(4.0, 32.0, 1.001)
+
 
         for i in range(count):
             shuffle(training_data)
@@ -90,9 +94,14 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
             
             with textcat.model.use_params(optimizer.averages):
                 results = evaluate_model(nlp.tokenizer, textcat, test_data)
+
+            print(f'Model #{i+1}/{count}: Precision: {results["percision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
+            
+            # uncomment to save model "BE CAREFUL MAY DESTROY PREVIOUS MODEL"
+            save_model(nlp, optimizer, training_data, test_data, f'models/sentiment/models/model{i+1}')
         
-        # uncomment to save model "BE CAREFUL MAY DESTROY PREVIOUS MODEL"
-        save_model(nlp, optimizer)
+        
+        
 
 def evaluate_model(tokenizer: Tokenizer, textcat: Morphologizer, test_data: list) -> dict:
     """
@@ -120,7 +129,7 @@ def evaluate_model(tokenizer: Tokenizer, textcat: Morphologizer, test_data: list
         f_score = 0
     else:
         f_score = 2 * (precision * recall) / (precision + recall)
-        
+
     return {"precision": precision, "recall": recall, "f-score": f_score}
 
         
