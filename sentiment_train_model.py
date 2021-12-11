@@ -1,5 +1,6 @@
 """Structure for model trainer loosely taken from https://realpython.com/sentiment-analysis-python mainly for guide on spacy.
 dataset used is from https://ai.stanford.edu/~amaas/data/sentiment/
+using version 2.3.5 of spacy as version 3 includes api issues when trying to use en cor web sm
 """
 import os
 from random import shuffle
@@ -63,7 +64,7 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
     Trains model given training data. Code structure taken from https://realpython.com/sentiment-analysis-python
     Changes were made due to some efficiency issues, unclear code, and outdated uses of APIs and libraries
     """
-    results = []
+    results_txt = []
     nlp = spacy.load("en_core_web_sm") # for en_core_web_sm legacy issue, pip3 install: 
     # https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.0/en_core_web_sm-2.2.0.tar.gz
 
@@ -97,12 +98,12 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
                 results = evaluate_model(nlp.tokenizer, textcat, test_data)
 
             print(f'Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
-            results.append('Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
+            results_txt.append('Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
             # uncomment to save model "BE CAREFUL MAY DESTROY PREVIOUS MODEL"
             save_model(nlp, optimizer, training_data, test_data, f'models/sentiment/models/model{i+1}')
         
         with open('models/sentiment/models/results.txt', 'w') as f:
-            for result in results:
+            for result in results_txt:
                 f.write(result+'\n')
         
         
@@ -114,9 +115,8 @@ def evaluate_model(tokenizer: Tokenizer, textcat: Morphologizer, test_data: list
     """
     reviews, labels = zip(*test_data)
     reviews = (tokenizer(review) for review in reviews)
-    true_positives = 0
+    true_positives = true_negatives =  0
     false_positives = 1e-8  # Can't be 0 because of presence in denominator
-    true_negatives = 0
     false_negatives = 1e-8
     for i, review in enumerate(textcat.pipe(reviews)):
         true_label = labels[i]['cats']
