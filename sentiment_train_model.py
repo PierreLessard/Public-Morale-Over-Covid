@@ -63,6 +63,7 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
     Trains model given training data. Code structure taken from https://realpython.com/sentiment-analysis-python
     Changes were made due to some efficiency issues, unclear code, and outdated uses of APIs and libraries
     """
+    results = []
     nlp = spacy.load("en_core_web_sm") # for en_core_web_sm legacy issue, pip3 install: 
     # https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.0/en_core_web_sm-2.2.0.tar.gz
 
@@ -75,7 +76,7 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
     textcat.add_label("pos")
     textcat.add_label("neg")
 
-    with open('models/sentiment/models/test_data', 'wb') as f:
+    with open('models/sentiment/models/test_data.pkl', 'wb') as f:
         pickle.dump(test_data, f)
 
     # code to exclude useless pipes from training
@@ -95,10 +96,14 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
             with textcat.model.use_params(optimizer.averages):
                 results = evaluate_model(nlp.tokenizer, textcat, test_data)
 
-            print(f'Model #{i+1}/{count}: Precision: {results["percision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
-            
+            print(f'Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
+            results.append('Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]} , F-Score: {results["f-score"]}')
             # uncomment to save model "BE CAREFUL MAY DESTROY PREVIOUS MODEL"
             save_model(nlp, optimizer, training_data, test_data, f'models/sentiment/models/model{i+1}')
+        
+        with open('models/sentiment/models/results.txt', 'w') as f:
+            for result in results:
+                f.write(result+'\n')
         
         
         
@@ -107,35 +112,41 @@ def evaluate_model(tokenizer: Tokenizer, textcat: Morphologizer, test_data: list
     """
     evaluate the model to see if it is worthwhile to save the model
     """
-    true_pos, true_neg, false_pos, false_neg = 0, 0, 1e-8, 1e-8 #near zero for falses to avoid /0
     reviews, labels = zip(*test_data)
-    
-    for review, actual in zip(textcat.pipe(reviews), labels):
-        prediction = review.cats['pos'] #prediciton is value between 0 and 1 labelling it pos or not
-
-        if prediction >= .5 and actual['pos']:
-            true_pos += 1
-        elif prediction >= .5 and actual['neg']:
-            false_pos += 1
-        elif prediction < .5 and actual['neg']:
-            true_neg += 1
-        else:
-            false_neg += 1
-    
-    precision = true_pos / (true_pos + false_pos)
-    recall = true_pos / (true_pos + false_neg)
+    reviews = (tokenizer(review) for review in reviews)
+    true_positives = 0
+    false_positives = 1e-8  # Can't be 0 because of presence in denominator
+    true_negatives = 0
+    false_negatives = 1e-8
+    for i, review in enumerate(textcat.pipe(reviews)):
+        true_label = labels[i]['cats']
+        for predicted_label, score in review.cats.items():
+            # Every cats dictionary includes both labels. You can get all
+            # the info you need with just the pos label.
+            if (
+                predicted_label == "neg"
+            ):
+                continue
+            if score >= 0.5 and true_label["pos"]:
+                true_positives += 1
+            elif score >= 0.5 and true_label["neg"]:
+                false_positives += 1
+            elif score < 0.5 and true_label["neg"]:
+                true_negatives += 1
+            elif score < 0.5 and true_label["pos"]:
+                false_negatives += 1
+    precision = true_positives / (true_positives + false_positives)
+    recall = true_positives / (true_positives + false_negatives)
 
     if precision + recall == 0:
         f_score = 0
     else:
         f_score = 2 * (precision * recall) / (precision + recall)
-
     return {"precision": precision, "recall": recall, "f-score": f_score}
 
         
 
 if __name__ == "__main__":
     data = grab_training_data(True)
-    print(data[0][67])
-    train_model(data[0], data[1], 20)
+    train_model(data[0], data[1], 50)
     
