@@ -154,6 +154,6 @@ def write_data_to_csv(data: dict, loss: dict , count: int, csv_direc: str = 'mod
 if __name__ == "__main__":
     # Uncomment to retrain models
     # DISCLAIMER: takes hours and overwrites other files
-    # data = grab_training_data(True)
+    data = grab_training_data(True)
     # train_model(data[0], data[1], 25)
     
