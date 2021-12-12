@@ -12,6 +12,8 @@ from util import graph_updater
 
 # Using dbc for specific components: https://dash-bootstrap-components.opensource.faculty.ai
 import dash_bootstrap_components as dbc
+import dash_daq as daq
+import logging
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, 
                                                 data_loading.read_style_sheet()],)
@@ -83,27 +85,22 @@ def row_builder(row_number: int) -> dbc.Row:
                         value=25,
                     ),
                     html.Br(),
-                    html.P("Location selection", className="general_text"),
-                    dbc.Select(
-                        id=f"location-{row_number}",
-                        className="selector",
-                        options=[
-                            {"label": "Canada", "value": "Canada"},
-                            {
-                                "label": "United States",
-                                "value": "United States",
-                            },
-                        ],
-                        value="Canada",
-                    ),
-                    html.Br(),
                     html.P("Year Selection", className="general_text"),
                     dbc.Select(
                         id=f"year-{row_number}",
                         className="selector",
-                        options=[{'label': f'{year}', 'value': year} for year in [2021, 2021]],
+                        options=[{'label': f'{year}', 'value': year} for year in [2020, 2021]],
                         value=2021,
                     ),
+                    html.Br(),
+                    html.P("Show New Cases", className="general_text"),
+                    daq.ToggleSwitch(
+                        id=f"toggle-{row_number}",
+                        className='switch',
+                        value=False,
+                        size=50
+                    ),
+                    html.Br(),
                     html.Br(),
                     html.Div(
                         dbc.Spinner(
@@ -165,9 +162,10 @@ app.layout = html.Div(
                     ],
                 ),
                 html.Br(),                
-                html.H3(className="graph_title_text", children="Machine Learning Model Loss vs. Iteration"),
+                html.H3(className="graph_title_text", 
+                        children="Machine Learning Model Loss vs. Iteration"),
                 dbc.Row(className="row", 
-                        children=[graph_updater.update_main_graph(data_sets)], 
+                        children=[graph_updater.update_main_graph()], 
                         id="main-graph-container"),
                 divider, row1, divider, row2, divider, row3, divider, row4, divider,
                 dcc.Store(id="intermediate-value"),
@@ -183,11 +181,11 @@ def handle_loading_animation() -> None:
 
 
 def handle_graph_updates(data_source: str, data_state: str, 
-                        location: str, year: int) -> tuple[str, px.line, px.bar]:
+                        toggle: bool, year: int) -> tuple[str, px.line, px.bar]:
 
     title = f"Model trained at {data_state} applied to data from {data_source}"
     main_graph, stats_graph = graph_updater.generate_graph(
-        data_sets, data_source, data_state, location, year
+        data_sets, data_source, data_state, toggle, year
     )
     return title, main_graph, stats_graph
 
@@ -201,17 +199,17 @@ def handle_graph_updates(data_source: str, data_state: str,
     [
         Input("source-1", "value"),
         Input("data-1", "value"),
-        Input("location-1", "value"),
+        Input("toggle-1", "value"),
         Input("year-1", "value"),
     ],
 )
 def update_graph_1(data_source: str, data_state: str, 
-                   location: str, year: int) -> tuple[px.line, px.bar]:
+                   toggle: bool, year: int) -> tuple[px.line, px.bar]:
     """A generic function that can be used to update all graphs based on user input
 
     Returns a title and two graph objects, one for the main graph and one for statistics.
     """
-    return handle_graph_updates(data_source, data_state, location, year)
+    return handle_graph_updates(data_source, data_state, toggle, year)
 
 
 @app.callback(
@@ -223,13 +221,13 @@ def update_graph_1(data_source: str, data_state: str,
     [
         Input("source-2", "value"),
         Input("data-2", "value"),
-        Input("location-2", "value"),
+        Input("toggle-2", "value"),
         Input("year-2", "value"),
     ],
 )
 def update_graph_2(data_source: str, data_state: str, 
-                   location: str, year: int) -> tuple[px.line, px.bar]:
-    return handle_graph_updates(data_source, data_state, location, year)
+                   toggle: bool, year: int) -> tuple[px.line, px.bar]:
+    return handle_graph_updates(data_source, data_state, toggle, year)
 
 
 @app.callback(
@@ -241,13 +239,13 @@ def update_graph_2(data_source: str, data_state: str,
     [
         Input("source-3", "value"),
         Input("data-3", "value"),
-        Input("location-3", "value"),
+        Input("toggle-3", "value"),
         Input("year-3", "value"),
     ],
 )
 def update_graph_3(data_source: str, data_state: str, 
-                   location: str, year: int) -> tuple[px.line, px.bar]:
-    return handle_graph_updates(data_source, data_state, location, year)
+                   toggle: bool, year: int) -> tuple[px.line, px.bar]:
+    return handle_graph_updates(data_source, data_state, toggle, year)
 
 
 @app.callback(
@@ -259,13 +257,13 @@ def update_graph_3(data_source: str, data_state: str,
     [
         Input("source-4", "value"),
         Input("data-4", "value"),
-        Input("location-4", "value"),
+        Input("toggle-4", "value"),
         Input("year-4", "value"),
     ],
 )
 def update_graph_4(data_source: str, data_state: str, 
-                   location: str, year: int) -> tuple[px.line, px.bar]:
-    return handle_graph_updates(data_source, data_state, location, year)
+                   toggle: bool, year: int) -> tuple[px.line, px.bar]:
+    return handle_graph_updates(data_source, data_state, toggle, year)
 
 
 @app.callback(
@@ -273,7 +271,7 @@ def update_graph_4(data_source: str, data_state: str,
     [
         Input("source-1", "value"),
         Input("data-1", "value"),
-        Input("location-1", "value"),
+        Input("toggle-1", "value"),
         Input("year-1", "value"),
     ],
 )
@@ -287,7 +285,7 @@ def load_output_1(a, b, c, d) -> None:
     [
         Input("source-2", "value"),
         Input("data-2", "value"),
-        Input("location-2", "value"),
+        Input("toggle-2", "value"),
         Input("year-2", "value"),
     ],
 )
@@ -301,7 +299,7 @@ def load_output_2(a, b, c, d) -> None:
     [
         Input("source-3", "value"),
         Input("data-3", "value"),
-        Input("location-3", "value"),
+        Input("toggle-3", "value"),
         Input("year-3", "value"),
     ],
 )
@@ -315,7 +313,7 @@ def load_output_3(a, b, c, d) -> None:
     [
         Input("source-4", "value"),
         Input("data-4", "value"),
-        Input("location-4", "value"),
+        Input("toggle-4", "value"),
         Input("year-4", "value"),
     ],
 )
@@ -328,3 +326,5 @@ def run_app() -> None:
     """Runs the app
     """
     app.run_server(debug=True)
+
+logging.basicConfig(level=logging.DEBUG)

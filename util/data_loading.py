@@ -1,4 +1,4 @@
-"""Utility functions for loading the data for visualizaztion"""
+"""Utility functions for loading the data"""
 import os
 import pandas as pd
 import datetime
@@ -10,10 +10,17 @@ import dash_bootstrap_components as dbc
 
 DIR_PATH = Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute()
 
-FILE_NAMES = ['PortionOfCovidCaseDataset.csv']
+FILE_NAMES = ('covid_cases.csv',)
+
+def read_main_graph_data() -> pd.DataFrame:
+    """The main graph containing the training of the model is independent from the rest.
+    It will be processed separately. 
+    """
+    return pd.read_csv(os.path.join(DIR_PATH, os.path.join('data', 'evaluations.csv')))
 
 
 def read_style_sheet():
+    """Reads the css style sheets"""
     THEME_PATH = os.path.join(DIR_PATH, os.path.join('assets', 'custom-theme.css'))
     return [dbc.themes.BOOTSTRAP, THEME_PATH]
 
@@ -42,5 +49,7 @@ def clean_data(data: dict[str, pd.DataFrame]) -> None:
     The Dictionary is mutated and not returned.
     """
     for df in data.values():
-        for day in range(len(df['Date'])):
-            df.loc[day, 'Date'] = datetime.datetime.strptime(df.loc[day, 'Date'], '%b %d %Y')
+        # Only clean the data frame that has Date as a column
+        if 'Date' in df.columns:
+            for day in range(len(df['Date'])):
+                df.loc[day, 'Date'] = datetime.datetime.strptime(df.loc[day, 'Date'], '%b %d %Y')
