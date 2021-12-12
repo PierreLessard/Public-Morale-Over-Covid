@@ -7,7 +7,7 @@ import pickle
 import spacy
 from spacy.tokens import Token
 import nltk
-from nltk.corpus import wordnest as wn
+from nltk.corpus import wordnet as wn
 
 
 def load_training_data(direc: str = '/data/nyt-articles-2020.csv', size: int = 50) -> DataFrame:
