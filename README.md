@@ -7,7 +7,7 @@ git clone https://github.com/PierreLessard/Public-Morale-Over-Covid
 ```
 In the directory, create a new virtual enviornment and activate it:
 ```
-python3 -m virtualenv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 To install all dependencies, run:
