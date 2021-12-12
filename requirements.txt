@@ -1,4 +1,5 @@
 # Reqruiements:
+# If Spacy 2.3.5 is not downloadable, use any version after 2.2.0 and before 3
 spacy==2.3.5
 nytimes-scraper
 requests
