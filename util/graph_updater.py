@@ -5,8 +5,6 @@ import plotly.io as pio
 import pandas as pd
 from dash import dcc
 
-import logging
-
 pio.templates.default = "simple_white"
 
 def update_main_graph(data_sets: pd.DataFrame) -> px.scatter:
@@ -19,6 +17,7 @@ def update_main_graph(data_sets: pd.DataFrame) -> px.scatter:
             y="New Cases",
             trendline='ols')
     )
+
 
 def generate_graph(data_sets: pd.DataFrame, data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
     """Takes in the inputs and returns a graph object. The inputs are the source, data, location and year.
@@ -45,11 +44,9 @@ def generate_graph(data_sets: pd.DataFrame, data_source: str, data_state: str, l
             ]
         },
     )
-    logging.debug(stat_data_sets)
     stats_graph = px.bar(
         stat_data_sets,
         x=["Max", "Min", "Mean"],
         y="Cases",
     )
     return main_graph, stats_graph
-

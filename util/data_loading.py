@@ -12,6 +12,7 @@ DIR_PATH = Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute()
 
 FILE_NAMES = ['PortionOfCovidCaseDataset.csv']
 
+
 def read_style_sheet():
     THEME_PATH = os.path.join(DIR_PATH, os.path.join('assets', 'custom-theme.css'))
     return [dbc.themes.BOOTSTRAP, THEME_PATH]

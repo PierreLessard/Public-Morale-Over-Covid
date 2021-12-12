@@ -1,5 +1,4 @@
-"""Data visualization using Dash and plotly express: https://dash.plotly.com
-"""
+"""Data visualization using Dash and plotly express: https://dash.plotly.com"""
 import plotly.express as px
 import pandas as pd
 import dash
@@ -14,36 +13,18 @@ from util import graph_updater
 # Using dbc for specific components: https://dash-bootstrap-components.opensource.faculty.ai
 import dash_bootstrap_components as dbc
 
-# remove upon completion
-import logging
-
-app = dash.Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP, data_loading.read_style_sheet()],
-)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, 
+                                                data_loading.read_style_sheet()],)
 app.title = "Pandemic's Impact on the Public Sentiment"
 
-months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-]
 
 # Data loading
 data_sets = data_loading.read_data()
 data_loading.clean_data(data_sets)
 
+
 # App layout
-def row_builder(row_number) -> dbc.Row:
+def row_builder(row_number: int) -> dbc.Row:
     """
     Builds a standard row based on row_number
     """
@@ -134,6 +115,7 @@ def row_builder(row_number) -> dbc.Row:
         ],
     )
 
+
 # initiate the rows
 row1 = row_builder(1)
 row2 = row_builder(2)
@@ -163,14 +145,20 @@ app.layout = html.Div(
                             className="intro_text",
                             children=[
                                 html.H5(
-                                    "This project uses machine learning to analyse the sentiments of the public with respect to new daily cases."
+                                    "This project uses machine learning to analyse the sentiments \
+                                    of the public with respect to new daily cases."
                                 ),
                                 html.H5(
-                                    "The data is collected from the comment sections from a wide range of sources, including news & social media comments"
+                                    "The data is collected from the comment sections from a wide \
+                                    range of sources, including news & social media comments"
                                 ),
                                 html.H5(
-                                    "Select & configure multiple graphs at once to compare our findings"
+                                    "Select & configure multiple graphs \
+                                    at once to compare our findings"
                                 ),
+                                html.H5(['Github: ', html.A('https://github.com/PierreLessard/Public-Morale-Over-Covid', 
+                                                            href='https://github.com/PierreLessard/Public-Morale-Over-Covid',
+                                                            style={'color': 'white'})]),
                                 html.Br(),
                             ],
                         ),
@@ -178,7 +166,9 @@ app.layout = html.Div(
                 ),
                 html.Br(),                
                 html.H3(className="graph_title_text", children="Machine Learning Model Loss vs. Iteration"),
-                dbc.Row(className="row", children=[graph_updater.update_main_graph(data_sets)], id="main-graph-container"),
+                dbc.Row(className="row", 
+                        children=[graph_updater.update_main_graph(data_sets)], 
+                        id="main-graph-container"),
                 divider, row1, divider, row2, divider, row3, divider, row4, divider,
                 dcc.Store(id="intermediate-value"),
             ],
@@ -186,21 +176,20 @@ app.layout = html.Div(
     ]
 )
 
-# User interactions
 
-@app.callback(
-    Output("loading-output-1", "children"),
-    [
-        Input("source-1", "value"),
-        Input("data-1", "value"),
-        Input("location-1", "value"),
-        Input("year-1", "value"),
-    ],
-)
-def load_output(a, b, c, d):
-    """Animation of the loading symbol"""
-    if a or b or c or d:
-        time.sleep(1)
+# User interactions
+def handle_loading_animation() -> None:
+    time.sleep(1)
+
+
+def handle_graph_updates(data_source: str, data_state: str, 
+                        location: str, year: int) -> tuple[str, px.line, px.bar]:
+
+    title = f"Model trained at {data_state} applied to data from {data_source}"
+    main_graph, stats_graph = graph_updater.generate_graph(
+        data_sets, data_source, data_state, location, year
+    )
+    return title, main_graph, stats_graph
 
 
 @app.callback(
@@ -216,31 +205,13 @@ def load_output(a, b, c, d):
         Input("year-1", "value"),
     ],
 )
-def update_graph_1(data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
+def update_graph_1(data_source: str, data_state: str, 
+                   location: str, year: int) -> tuple[px.line, px.bar]:
     """A generic function that can be used to update all graphs based on user input
 
     Returns a title and two graph objects, one for the main graph and one for statistics.
     """
-
-    title = f"Model trained at {data_state} applied to data from {data_source}"
-    main_graph, stats_graph = graph_updater.generate_graph(
-        data_sets, data_source, data_state, location, year
-    )
-    return title, main_graph, stats_graph
-
-
-@app.callback(
-    Output("loading-output-2", "children"),
-    [
-        Input("source-2", "value"),
-        Input("data-2", "value"),
-        Input("location-2", "value"),
-        Input("year-2", "value"),
-    ],
-)
-def load_output(a, b, c, d):
-    if a or b or c or d:
-        time.sleep(1)
+    return handle_graph_updates(data_source, data_state, location, year)
 
 
 @app.callback(
@@ -256,26 +227,9 @@ def load_output(a, b, c, d):
         Input("year-2", "value"),
     ],
 )
-def update_graph_1(data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
-    title = f"Model trained at {data_state} applied to data from {data_source}"
-    main_graph, stats_graph = graph_updater.generate_graph(
-        data_sets, data_source, data_state, location, year
-    )
-    return title, main_graph, stats_graph
-
-
-@app.callback(
-    Output("loading-output-3", "children"),
-    [
-        Input("source-3", "value"),
-        Input("data-3", "value"),
-        Input("location-3", "value"),
-        Input("year-3", "value"),
-    ],
-)
-def load_output(a, b, c, d):
-    if a or b or c or d:
-        time.sleep(1)
+def update_graph_2(data_source: str, data_state: str, 
+                   location: str, year: int) -> tuple[px.line, px.bar]:
+    return handle_graph_updates(data_source, data_state, location, year)
 
 
 @app.callback(
@@ -291,25 +245,9 @@ def load_output(a, b, c, d):
         Input("year-3", "value"),
     ],
 )
-def update_graph_1(data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
-    title = f"Model trained at {data_state} applied to data from {data_source}"
-    main_graph, stats_graph = graph_updater.generate_graph(
-        data_sets, data_source, data_state, location, year
-    )
-    return title, main_graph, stats_graph
-
-@app.callback(
-    Output("loading-output-4", "children"),
-    [
-        Input("source-4", "value"),
-        Input("data-4", "value"),
-        Input("location-4", "value"),
-        Input("year-4", "value"),
-    ],
-)
-def load_output(a, b, c, d):
-    if a or b or c or d:
-        time.sleep(1)
+def update_graph_3(data_source: str, data_state: str, 
+                   location: str, year: int) -> tuple[px.line, px.bar]:
+    return handle_graph_updates(data_source, data_state, location, year)
 
 
 @app.callback(
@@ -325,14 +263,68 @@ def load_output(a, b, c, d):
         Input("year-4", "value"),
     ],
 )
-def update_graph_1(data_source: str, data_state: str, location: str, year: int) -> tuple[px.line, px.bar]:
-    title = f"Model trained at {data_state} applied to data from {data_source}"
-    main_graph, stats_graph = graph_updater.generate_graph(
-        data_sets, data_source, data_state, location, year
-    )
-    return title, main_graph, stats_graph
+def update_graph_4(data_source: str, data_state: str, 
+                   location: str, year: int) -> tuple[px.line, px.bar]:
+    return handle_graph_updates(data_source, data_state, location, year)
 
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+@app.callback(
+    Output("loading-output-1", "children"),
+    [
+        Input("source-1", "value"),
+        Input("data-1", "value"),
+        Input("location-1", "value"),
+        Input("year-1", "value"),
+    ],
+)
+def load_output_1(a, b, c, d) -> None:
+    """Animates the loading symbol"""
+    handle_loading_animation()
+
+
+@app.callback(
+    Output("loading-output-2", "children"),
+    [
+        Input("source-2", "value"),
+        Input("data-2", "value"),
+        Input("location-2", "value"),
+        Input("year-2", "value"),
+    ],
+)
+def load_output_2(a, b, c, d) -> None:
+    """Animates the loading symbol"""
+    handle_loading_animation()
+
+
+@app.callback(
+    Output("loading-output-3", "children"),
+    [
+        Input("source-3", "value"),
+        Input("data-3", "value"),
+        Input("location-3", "value"),
+        Input("year-3", "value"),
+    ],
+)
+def load_output_3(a, b, c, d) -> None:
+    """Animates the loading symbol"""
+    handle_loading_animation()
+
+
+@app.callback(
+    Output("loading-output-4", "children"),
+    [
+        Input("source-4", "value"),
+        Input("data-4", "value"),
+        Input("location-4", "value"),
+        Input("year-4", "value"),
+    ],
+)
+def load_output_4(a, b, c, d) -> None:
+    """Animates the loading symbol"""
+    handle_loading_animation()
+
+
+def run_app() -> None:
+    """Runs the app
+    """
     app.run_server(debug=True)
