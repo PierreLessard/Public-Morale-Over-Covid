@@ -24,7 +24,6 @@ def open_model(direc: str = 'models/sentiment/saved_models/model50'):
 def model_predict_sentiment(model, txt: str) -> float:
     """
     use for larger data because model is not loaded each time
-
     given a model input and string input,
     output sentiment prediction
     returns a value from -1 to 1
@@ -33,3 +32,9 @@ def model_predict_sentiment(model, txt: str) -> float:
     """
     vals = model(txt).cats
     return vals["pos"] if vals["pos"]>vals["neg"] else -1*vals["neg"]
+
+if __name__ == "__main__":
+    """Leo Test Area"""
+    model = open_model()
+    txt = """Hopefully this works it should print some output of a value between -1 and 1. Cross your fingers"""
+    print(model_predict_sentiment(model,txt))
