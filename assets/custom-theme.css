@@ -3,22 +3,12 @@
     background: linear-gradient(55deg, #bdc3c7 0%, #2c3e50 50%, #bdc3c7 100%);
     overflow-x: hidden;
 }
-.graph_title_text{
-    text-align: center;
-    padding-bottom: 10px;
-}
-.main_graph{
-    width: 95%;
-    margin: auto;
-    padding-top: 15px;
-    padding-bottom: 15px;
-    border-radius: 5px;
-}
 .top_banner{
-    line-height: 1500%;
+    line-height: center;
     height: 100%;
     text-align: center;
-    padding-bottom: 10%;
+    padding-top: 25%;
+    padding-bottom: 30%;
     font-size: 350%;
     animation: fadein 4s;
 }
@@ -31,6 +21,17 @@
     line-height: 3000%;
     height: 80%;
     padding-bottom: 10%;
+}
+.graph_title_text{
+    text-align: center;
+    padding-bottom: 10px;
+}
+.main_graph{
+    width: 95%;
+    margin: auto;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    border-radius: 5px;
 }
 .row{
     align-self: auto;

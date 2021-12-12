@@ -1,6 +1,5 @@
 """Data visualization using Dash and plotly express: https://dash.plotly.com"""
 import plotly.express as px
-import pandas as pd
 import dash
 import time
 
@@ -177,12 +176,19 @@ app.layout = html.Div(
 
 # User interactions
 def handle_loading_animation() -> None:
+    """Shows the animation of loading for 1 second
+    """
     time.sleep(1)
 
 
 def handle_graph_updates(data_source: str, data_state: str, 
                         toggle: bool, year: int) -> tuple[str, px.line, px.bar]:
+    """Updates the graph based on the inputs
 
+    Graphs are generated with util.graph_updater.generate_graph, which returns
+    a plotly.express.line and a plotly.express.bar object.
+    Returns a tuple containing the titile of the new graph and the new graphs
+    """
     title = f"Model trained at {data_state} applied to data from {data_source}"
     main_graph, stats_graph = graph_updater.generate_graph(
         data_sets, data_source, data_state, toggle, year
@@ -323,8 +329,7 @@ def load_output_4(a, b, c, d) -> None:
 
 
 def run_app() -> None:
-    """Runs the app
-    """
+    """Runs the app"""
     app.run_server(debug=True)
 
 logging.basicConfig(level=logging.DEBUG)
