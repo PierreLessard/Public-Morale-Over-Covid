@@ -12,4 +12,4 @@ def predict_sentiment(txt: str, direc: str = 'models/sentiment/saved_models/mode
     Aproaching 1 being a positive sentiment
     """
     vals = spacy.load(direc)(txt).cats
-    return (f'{vals["pos"] if vals["pos"]>vals["neg"] else -1*vals["neg"]}')
+    return vals["pos"] if vals["pos"]>vals["neg"] else -1*vals["neg"]
