@@ -1,8 +1,6 @@
 # retrieve aclImbd (dataset to train sentiment model) from https://ai.stanford.edu/~amaas/data/sentiment/
 data/training/aclImdb
-# retrieve nyt-articles-2020.csv from https://www.kaggle.com/benjaminawd/new-york-times-articles-comments-2020?select=nyt-articles-2020.csv
-data/training/nyt-articles-2020.csv
-data/training/nyt-articles-2020.csv.zip
+data/training/df_2020.csv
 models/sentiment/models
 discord_bot.py
 __pycache__

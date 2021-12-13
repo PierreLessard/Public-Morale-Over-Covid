@@ -10,17 +10,12 @@ import nltk
 from nltk.corpus import wordnet as wn
 
 
-def load_training_data(direc: str = '/data/nyt-articles-2020.csv', size: int = 50) -> DataFrame:
+def load_training_data(direc: str = 'data/training/covid_article2.txt', size: int = 50) -> str:
     """
-    opens csv file to train with, retrieve from:
-    https://www.kaggle.com/benjaminawd/new-york-times-articles-comments-2020?select=nyt-articles-2020.csv
-    takes size articles
+    opens text file with sample article to train
     """
-    data = pd.read_csv(direc).head(size)
-    data.dropna()
-
-    print(data.head())
-    return data
+    with open(direc, 'r', encoding='Latin1') as f:
+        return f.read()
 
 
 def tokenize(text: str) -> list[Token]:
@@ -43,7 +38,7 @@ def tokenize(text: str) -> list[Token]:
 
 def get_lemma(word: str) -> str:
     """ returns the lemma of a word (simplifies word as possible)"""
-    lemma = wn.morphy(word)
+    return wn.morphy(word) or word
     
 
 def train_LDA_model(data: DataFrame, direc: str) -> None:
@@ -70,3 +65,20 @@ def train_LDA_model(data: DataFrame, direc: str) -> None:
         pickle.dump([lda, vectorized_data, vect_to_word])
 
 
+def prepare_Text_for_lda(text: str) -> list[Token]:
+    """
+    main function to prepare text for lda
+    lemma-izes words and removes stop words
+    """
+    nltk.download('stopwords')
+    stop_words = set(nltk.corpus.stopwords.words('english'))
+    return [get_lemma(t) for t in tokenize(text) if len(t)>4 and t not in stop_words]
+
+
+if __name__ == '__main__':
+    """Trianing Section"""
+    
+    data = load_training_data()
+    with open('data/training/covid_article3.txt', 'w', encoding='latin1') as f:
+        f.write(data.replace('�',''))
+        
