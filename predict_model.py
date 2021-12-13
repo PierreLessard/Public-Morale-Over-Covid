@@ -1,6 +1,6 @@
 from os import listdir
 from os.path import isfile, join
-import sentiment_model 
+import models.sentiment_model as sentiment_model 
 import datetime
 import pandas as pd
 import logging
