@@ -29,7 +29,7 @@ def update_main_graph() -> px.line:
     )
 
 
-def generate_graph(data_sets: pd.DataFrame, start_date: datetime.datetime, end_date: datetime.datetime, moving_av: bool) -> tuple[px.line, px.bar]:
+def generate_graph(data_sets: pd.DataFrame, start_date: datetime.datetime, end_date: datetime.datetime, moving_av: bool, historic: bool) -> tuple[px.line, px.bar]:
     """Takes in the inputs and returns a graph object. The inputs are the source, data, location and year.
     The graph is a prediction of the sentiment from the comments as a function of time. Another trace of cases can be displayed as well.
     We can also have graphs directly comparing # of cases with sentiment by having cases on the x and its sentiment on that day on the y.
@@ -53,6 +53,14 @@ def generate_graph(data_sets: pd.DataFrame, start_date: datetime.datetime, end_d
             go.Line(
                 x=df_case.loc[:, 'Date'],
                 y=df_case.loc[:, '7-Day Moving Avg']
+            )
+        )
+    
+    if historic:
+        graph_A.add_trace(
+            go.Line(
+                x=df_case.loc[:, 'Date'],
+                y=df_case.loc[:, 'Historic']
             )
         )
 

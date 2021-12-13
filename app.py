@@ -74,24 +74,28 @@ def row_builder(row_number: int) -> dbc.Row:
                 ),
                 html.Br(),
                 dbc.Col(
-                    width=2,
                     children=[
-                        html.P("Date Selection", className="general_text"),
-                        dcc.DatePickerRange(
-                            id=f"date-{row_number}",
-                            className='date-select',
-                            minimum_nights=10,
-                            calendar_orientation='horizontal',
-                            min_date_allowed=datetime.datetime(2020, 1, 1),
-                            max_date_allowed=datetime.datetime(2021, 12, 31),
-                            start_date=datetime.datetime(2020, 6, 1),
-                            end_date=datetime.datetime(2021, 1, 1)
+                        html.P("Date Selection", 
+                               className="general_text"),
+                        html.Div(
+                            id='date-select-div',
+                            children=[
+                                dcc.DatePickerRange(
+                                    id=f"date-{row_number}",
+                                    className='date-select',
+                                    minimum_nights=10,
+                                    calendar_orientation='horizontal',
+                                    min_date_allowed=datetime.datetime(2020, 1, 1),
+                                    max_date_allowed=datetime.datetime(2021, 12, 31),
+                                    start_date=datetime.datetime(2020, 6, 1),
+                                    end_date=datetime.datetime(2021, 1, 1)
+                                    )
+                                ]
                         ),
                     ],
                 ),
                 html.Br(),
                 dbc.Col(
-                    width=2,
                     children=[
                         html.P("Show 7-Day Moving Avg",
                                className="general_text"),
@@ -103,7 +107,18 @@ def row_builder(row_number: int) -> dbc.Row:
                         ),
                     ]
                 ),
-                html.Br(),
+                dbc.Col(
+                    children=[
+                        html.P("Show Historic Cases",
+                               className="general_text"),
+                        daq.ToggleSwitch(
+                            id=f"historic-{row_number}",
+                            className='switch',
+                            value=False,
+                            size=50
+                        ),
+                    ]
+                ),
                 html.Br(),
             ]
         ),
@@ -116,11 +131,8 @@ def row_builder(row_number: int) -> dbc.Row:
     )
 
 
-# initiate the rows
+# initiate the row
 row1 = row_builder(1)
-row2 = row_builder(2)
-row3 = row_builder(3)
-row4 = row_builder(4)
 divider = html.Div(style={"height": "100px"})
 
 app.layout = html.Div(
@@ -174,7 +186,6 @@ app.layout = html.Div(
                     className='row-div'
                 ),
                 divider, row1, divider,
-                dcc.Store(id="intermediate-value"),
             ],
         )
     ]
@@ -182,27 +193,6 @@ app.layout = html.Div(
 
 
 # User interactions
-def handle_loading_animation() -> None:
-    """Shows the animation of loading for 1 second
-    """
-    time.sleep(1)
-
-
-def handle_graph_updates(start_date: datetime.datetime, end_date: datetime.datetime, moving_avg: int) -> tuple[str, px.line, px.bar]:
-    """Updates the graph based on the inputs
-
-    Graphs are generated with util.graph_updater.generate_graph, which returns
-    a plotly.express.line and a plotly.express.bar object.
-    Returns a tuple containing the titile of the new graph and the new graphs
-    """
-    titlea = "New Cases vs. Time"
-    titleb = "Sentiment vs. Time"
-    main_graph, stats_graph = graph_updater.generate_graph(
-        data_sets, start_date, end_date, moving_avg
-    )
-    return titlea, titleb, main_graph, stats_graph
-
-
 @app.callback(
     [
         Output("graph-1a-title", "children"),
@@ -213,15 +203,27 @@ def handle_graph_updates(start_date: datetime.datetime, end_date: datetime.datet
     [
         Input("date-1", "start_date"),
         Input("date-1", "end_date"),
-        Input("case-1", "value")
+        Input("case-1", "value"),
+        Input("historic-1", "value"),
     ],
 )
-def update_graph_1(start_date: str, end_date: str, moving_avg: int) -> tuple[px.line, px.bar]:
+def update_graph(start_date: str, end_date: str, moving_avg: bool, historic: bool) -> tuple[px.line, px.bar]:
     """A generic function that can be used to update all graphs based on user input
-
-    Returns a title and two graph objects, one for the main graph and one for statistics.
+    Graphs are generated with util.graph_updater.generate_graph, which returns
+    two plotly.express.line objects representing New Cases vs. Time and Sentiment vs. Time.
+    The range of the data is from start_date to end_date
+    Based on moving_avg and historic, traces of 7 day moving average and historical cases
+    are added onto the graph.
+    Returns a tuple containing the titile of the new graph and the new graphs
     """
-    return handle_graph_updates(datetime.datetime.fromisoformat(start_date), datetime.datetime.fromisoformat(end_date), moving_avg)
+    title_A = "New Cases vs. Time"
+    title_B = "Sentiment vs. Time"
+    graph_A, graph_B = graph_updater.generate_graph(data_sets, 
+                                                        datetime.datetime.fromisoformat(start_date), 
+                                                        datetime.datetime.fromisoformat(end_date),
+                                                        moving_avg,
+                                                        historic,)
+    return title_A, title_B, graph_A, graph_B
 
 
 @app.callback(
@@ -230,11 +232,12 @@ def update_graph_1(start_date: str, end_date: str, moving_avg: int) -> tuple[px.
         Input("date-1", "start_date"),
         Input("date-1", "end_date"),
         Input("case-1", "value"),
+        Input("historic-1", "value"),
     ],
 )
-def load_output_1(a, b, c) -> None:
+def load_output_1(a, b, c, d) -> None:
     """Animates the loading symbol"""
-    handle_loading_animation()
+    time.sleep(1)
 
 
 def run_app() -> None:
