@@ -6,23 +6,22 @@ from sklearn.decomposition import LatentDirichletAllocation as LDA
 import pickle
 import spacy
 from spacy.tokens import Token
+from spacy.lang.en import English as Parser
 import nltk
+nltk.download('wordnet')
+nltk.download('stopwords')
 from nltk.corpus import wordnet as wn
-
-
-def load_training_data(direc: str = 'data/training/covid_article2.txt', size: int = 50) -> str:
-    """
-    opens text file with sample article to train
-    """
-    with open(direc, 'r', encoding='Latin1') as f:
-        return f.read()
-
+from random import random
+import gensim
+from gensim import corpora
+from typing import Optional
+from functools import reduce
 
 def tokenize(text: str) -> list[Token]:
     """
     tokenizes the text to be easily vectorized/lemma/stopped/stemmed later
     """
-    tokenizer = spacy.lang.en.English()
+    tokenizer = Parser()
     res = []
     for token in tokenizer(text):
         if token.orth_.isspace():
@@ -41,44 +40,76 @@ def get_lemma(word: str) -> str:
     return wn.morphy(word) or word
     
 
-def train_LDA_model(data: DataFrame, direc: str) -> None:
-    """
-    Use data from model training,
-    save model to direc
-    remove stop words, max_df set to exclude words that appear in
-    80% of articles. May have to change this as COVID may appear
-    in >80% of articles. Should be safe to increase to 90%.
-    min_df can be increased to exclude unneaded topics
-    """
-    vect_to_word = CountVectorizer(max_df=.8, min_df=2, stop_words='english')
-    vectorized_data = vect_to_word.fit_transform(data['Text'].values.astype('U'))
-    lda = LDA(n_components=5)
-    lda.fit(vectorized_data)
-
-    
-    for i in range(10):
-        cur_topic = lda.components_[i]
-        top_words = list(map(vect_to_word.get_feature_names().get,cur_topic.argsort()[-10:]))
-        print(f'Topic #{i+1} words: {top_words}, Size={len(cur_topic)}')
-    
-    with open(direc, 'wb') as f:
-        pickle.dump([lda, vectorized_data, vect_to_word])
-
-
-def prepare_Text_for_lda(text: str) -> list[Token]:
+def prepare_text_for_lda(text: str) -> list[Token]:
     """
     main function to prepare text for lda
     lemma-izes words and removes stop words
     """
-    nltk.download('stopwords')
     stop_words = set(nltk.corpus.stopwords.words('english'))
     return [get_lemma(t) for t in tokenize(text) if len(t)>4 and t not in stop_words]
 
 
-if __name__ == '__main__':
-    """Trianing Section"""
+def load_training_data(direc: str = 'data/training/training_articles.csv', size: int = 50):
+    """
+    opens text file with sample articles to train and tokenizes
+    """
+    with open(direc) as f:
+        return [prepare_text_for_lda(line) for line in f]
+
+
+def train_LDA_model(data: Optional[str] = None, direc: str = 'models/covid_topic_labelling/other_models') -> None:
+    """
+    Input data,
+    save model to direc
+    """
+    tokenized_data = load_training_data(data) if data else load_training_data()
+    dct = corpora.Dictionary(tokenized_data)
+    corpus = [dct.doc2bow(tokens) for tokens in tokenized_data]
+    pickle.dump(corpus, open(f'{direc}/corpus.pkl', 'wb'))
+    dct.save(f'{direc}/dictionary.gensim')
+
+    model = gensim.models.ldamodel.LdaModel(corpus,
+    num_topics=10,
+    id2word=dct,
+    passes=15)
+    model.save(f'{direc}/model.gensim')
+
+    for c,topic in enumerate(model.print_topics(num_words=20)):
+        print(f'Topic {c} Words: {topic}\n\n')
+
+def load_model(direc: str = 'models/covid_topic_labelling'):
+    """
+    loads model from direc
+    returns (dicitonary,model)
+    """
+    return(gensim.corpora.Dictionary.load(f'{direc}/dictionary.gensim'),gensim.models.ldamodel.LdaModel.load(f'{direc}/model.gensim'))
+
+def predict_covid_label(txt: str, model, dct) -> float:
+    """
+    returns a value from 0-1 indicating predicated probablity of 
+    relating to topic of covid
+    input is text as string and optional directory for model
+    """
+    # tokenize text
+    tokenized_txt = prepare_text_for_lda(txt)
+
+    return reduce(lambda x,y: x+y[1], model.get_document_topics(dct.doc2bow(tokenized_txt))[-2:], 0)
     
-    data = load_training_data()
-    with open('data/training/covid_article3.txt', 'w', encoding='latin1') as f:
-        f.write(data.replace('�',''))
+
+if __name__ == '__main__':
+    """Trianing Section
+    dont uncomment unless rewrite models"""
+    # train_LDA_model()
+    
+    """Model Testing Section"""
+    txt = """Covid is so common, Everyone is positive with covid-19
+    The president is a patient and is contagious, the symptoms are bad
+    omicron is coming to the world they say. I have to get a test for my flight"""
+    txt2 = """Leetcode is fun but I gotta say this it does suck up my time
+    I find myself avoiding coding for my cs final project by instead coding
+    useless algorithms on a site filled with questions about useless algorithms"""
+    dct, model = load_model()
+    print(predict_covid_label(txt, model, dct))
+    print(predict_covid_label(txt2, model, dct))
+
         
