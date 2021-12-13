@@ -8,18 +8,12 @@ import csv
 import multiprocessing as mp
 
 
-"""
-Use multiprocessing to speed up prediction process
-"""
-
-def start_processes(ps):
-    for p in ps:
-        p.start()
-    for p in ps:
-        p.join()
-
-
 def predict_sentiment(files) -> None:
+    """
+    Use multiprocessing to speed up prediction process
+    All files are passed in here and the model is applied.
+    The output is a csv file written to data/prediction_outputs
+    """
     for file in files:
         date_and_value = []
         logging.basicConfig(level=logging.DEBUG)
@@ -38,6 +32,16 @@ def predict_sentiment(files) -> None:
             writer.writerows(date_and_value)
             logging.debug(f"Writing compelete")
 
+
+def start_processes(ps):
+    """Starts the Process object.
+    """
+    for p in ps:
+        p.start()
+    for p in ps:
+        p.join()
+
+
 if __name__ == '__main__':
     my_path = 'data/comments'
     files = [f for f in listdir(my_path) if isfile(join(my_path, f))]
@@ -48,5 +52,7 @@ if __name__ == '__main__':
     files_5 = files[36: 42]
     files_6 = files[42: 52]
     l = [files_1, files_2, files_3, files_4, files_5, files_6]
-    processes = [mp.Process(target=predict_sentiment, args=(file, )) for file in l]
-    start_processes(processes)
+    # WARNNING: This file applys the model to the datasheets in 6 parrallel processes.
+    # It uses 6 cores and takes 100% of the CPU. 
+    # processes = [mp.Process(target=predict_sentiment, args=(file, )) for file in l]
+    # start_processes(processes)
