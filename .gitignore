@@ -1,6 +1,6 @@
 # retrieve aclImbd (dataset to train sentiment model) from https://ai.stanford.edu/~amaas/data/sentiment/
-data/training/aclImdb
-data/training/df_2020.csv
+data/training/aclImdb 
+# files for extra models created by sentiment_train_model.py
 models/sentiment/models
 discord_bot.py
 __pycache__
