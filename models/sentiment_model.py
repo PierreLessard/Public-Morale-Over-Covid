@@ -1,9 +1,5 @@
-import os
 import spacy
-from spacy.tokenizer import Tokenizer
 from pathlib import Path
-
-
 
 def predict_sentiment(txt: str, direc: str = 'models/sentiment/saved_models/model50') -> float:
     """
@@ -37,8 +33,8 @@ def model_predict_sentiment(model, txt: str) -> float:
     return vals["pos"] if vals["pos"]>vals["neg"] else -1*vals["neg"]
 
 if __name__ == "__main__":
-    """Leo Test Area"""
+    """Test Area"""
     model = open_model()
-    txt = """Hopefully this works it should print some output of a value between -1 and 1. Cross your fingers"""
+    txt = """should output same number"""
     print(model_predict_sentiment(model,txt))
     print(predict_sentiment(txt))
