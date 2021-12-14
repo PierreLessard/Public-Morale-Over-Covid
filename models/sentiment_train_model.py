@@ -4,7 +4,6 @@ using version 2.3.5 of spacy as version 3 includes api issues when trying to use
 """
 import os
 from random import shuffle
-import numpy as np
 import spacy
 import pickle
 from spacy.util import minibatch, compounding
@@ -16,6 +15,7 @@ def format_training_data(direc: str = "data/training/aclImdb/train") -> None:
     """
     Loads the training data from file_directory and stores the data into a pickle file
     Do not run if you have not downloaded and extracted the files from the downloadable tar.gz
+    Raw training data is not included in the repo as it aquirable from the link above
     """
     reviews = []
     
@@ -54,7 +54,7 @@ def grab_training_data(shuffle: bool = False, direc: str = 'data/training/movie_
     return shuffle_training_data(reviews) if shuffle else tuple(reviews)
 
 
-def save_model(nlp, optimizer, training_data, test_data, directory: str= 'models/sentiment/model_artifacts') -> None:
+def save_model(nlp, optimizer, directory: str= 'models/sentiment/model_artifacts') -> None:
     """saves the given model"""
 
     with nlp.use_params(optimizer.averages):
@@ -77,9 +77,8 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
     
     textcat = nlp.get_pipe("textcat")
     
-    textcat.add_label("pos")
-    textcat.add_label("neg")
-
+    textcat.add_label("pos") and textcat.add_label("neg")
+    
     with open('models/sentiment/models/test_data.pkl', 'wb') as f:
         pickle.dump(test_data, f)
 
@@ -155,5 +154,5 @@ if __name__ == "__main__":
     # Uncomment to retrain models
     # DISCLAIMER: takes hours and overwrites other files
     data = grab_training_data(True)
-    # train_model(data[0], data[1], 25)
+    train_model(data[0], data[1], 25)
     
