@@ -1,4 +1,5 @@
-"""Structure for model trainer loosely taken from https://realpython.com/sentiment-analysis-python mainly for guide on spacy.
+"""Structure for model trainer loosely taken from:
+https://realpython.com/sentiment-analysis-python mainly for guide on spacy.
 dataset used is from https://ai.stanford.edu/~amaas/data/sentiment/
 using version 2.3.5 of spacy as version 3 includes api issues when trying to use en cor web sm
 """
@@ -11,6 +12,7 @@ from spacy.tokenizer import Tokenizer
 from spacy.pipeline import Morphologizer
 import csv
 
+
 def format_training_data(direc: str = "data/training/aclImdb/train") -> None:
     """
     Loads the training data from file_directory and stores the data into a pickle file
@@ -22,10 +24,11 @@ def format_training_data(direc: str = "data/training/aclImdb/train") -> None:
     # we have a folder of positive reviews and negative reviews so well do two iterations
     for cat in ('pos', 'neg'):
         # grabs each individual review (each review is stored in its own text file)
-        for review_direc in filter(lambda j: j[-4:]=='.txt', os.listdir(f'{direc}/{cat}')):
+        for review_direc in filter(lambda j: j[-4:] == '.txt', os.listdir(f'{direc}/{cat}')):
             with open(f'{direc}/{cat}/{review_direc}', encoding="Latin-1") as f:
-                 #cleans the text and cattegorizes it
-                 reviews.append((f.read().replace('<br />', r'\n\n').strip(), {'cats':{'pos':'pos'==cat,'neg':'neg'==cat}}))
+                # cleans the text and cattegorizes it
+                reviews.append((f.read().replace('<br />', r'\n\n').strip(), 
+                                {'cats':{'pos': 'pos' == cat,'neg': 'neg' == cat}}))
     
     with open('data/training/movie_reviews_data.pkl', 'wb') as f:
         pickle.dump(reviews, f)
@@ -38,7 +41,7 @@ def shuffle_training_data(data: list, split: int = .8) -> tuple[list]:
     as recommended
     """
     shuffle(data)
-    return data[int(len(data)*split):], data[:int(len(data)*split)]
+    return data[int(len(data) * split):], data[:int(len(data) * split)]
 
 
 def grab_training_data(shuffle: bool = False, direc: str = 'data/training/movie_reviews_data.pkl') -> tuple[list]:
@@ -54,7 +57,7 @@ def grab_training_data(shuffle: bool = False, direc: str = 'data/training/movie_
     return shuffle_training_data(reviews) if shuffle else tuple(reviews)
 
 
-def save_model(nlp, optimizer, directory: str= 'models/sentiment/model_artifacts') -> None:
+def save_model(nlp, optimizer, directory: str = 'models/sentiment/model_artifacts') -> None:
     """saves the given model"""
 
     with nlp.use_params(optimizer.averages):
@@ -62,13 +65,28 @@ def save_model(nlp, optimizer, directory: str= 'models/sentiment/model_artifacts
         print(f"Model Saved to {directory}")
 
 
-def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
+def write_data_to_csv(data: dict, loss: dict, count: int, csv_direc: str = 'models/sentiment/evaluations.csv') -> None:
+    """Writes the evaluation data to csv file"""
+    new_row = [count, loss['textcat'], data['precision'], data['recall'], data['f-score']]
+    if not count:
+        fields = ["MODEL NUMBER", "LOSS", "PRECISION", "RECALL", "F-SCORE"]
+        with open(csv_direc, 'w', newline='') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(fields)
+            csvwriter.writerow(new_row)
+    else:
+        with open(csv_direc, 'a', newline='') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(new_row)
+
+
+def train_model(training_data: list[tuple], test_data: list[tuple], count: int) -> None:
     """
     Trains model given training data. Code structure taken from https://realpython.com/sentiment-analysis-python
     Changes were made due to some efficiency issues, unclear code, and outdated uses of APIs and libraries
     """
     results_txt = []
-    nlp = spacy.load("en_core_web_sm") # for en_core_web_sm legacy issue, pip3 install: 
+    nlp = spacy.load("en_core_web_sm")  # for en_core_web_sm legacy issue, pip3 install: 
     # https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.0/en_core_web_sm-2.2.0.tar.gz
 
     # morphologizer documentation: https://spacy.io/api/morphologizer#add_label
@@ -83,40 +101,39 @@ def train_model(training_data: list[tuple], test_data: list[tuple], count: int):
         pickle.dump(test_data, f)
 
     # code to exclude useless pipes from training
-    with nlp.disable_pipes([pipe for pipe in nlp.pipe_names if pipe!="textcat"]):
+    with nlp.disable_pipes([pipe for pipe in nlp.pipe_names if pipe != "textcat"]):
         optimizer = nlp.begin_training()
         batch_sizes = compounding(4.0, 32.0, 1.001)
 
-
         for i in range(count):
             shuffle(training_data)
-            batches, loss = minibatch(training_data, size = batch_sizes), {}
+            batches, loss = minibatch(training_data, size=batch_sizes), {}
 
             for batch in batches:
-                text, labels = zip(*batch) # batch is in the form [(text,label)] so we zip* and get a list for each
-                nlp.update(text, labels, drop=.2, sgd=optimizer, losses = loss)
+                text, labels = zip(*batch)  # batch is in the form [(text,label)] so we zip* and get a list for each
+                nlp.update(text, labels, drop=.2, sgd=optimizer, losses=loss)
             
             with textcat.model.use_params(optimizer.averages):
                 results = evaluate_model(nlp.tokenizer, textcat, test_data)
 
             txt_wrp = f'Model #{i+1}/{count}: Precision: {results["precision"]}, Recall: {results["recall"]}, F-Score: {results["f-score"]}, loss:{loss["textcat"]}.'
-            print(txt_wrp,end=' ')
+            print(txt_wrp, end=' ')
             results_txt.append(txt_wrp)
             write_data_to_csv(results, loss, i)
 
             # uncomment to save model "BE CAREFUL MAY DESTROY PREVIOUS MODEL"
-            save_model(nlp, optimizer, training_data, test_data, f'models/sentiment/models/model{i+1}')
+            save_model(nlp, optimizer, f'models/sentiment/models/model{i+1}')
         
         with open('models/sentiment/results.txt', 'w') as f:
             for result in results_txt:
-                f.write(result+'\n')
+                f.write(result + '\n')
         
         
 def evaluate_model(tokenizer: Tokenizer, textcat: Morphologizer, test_data: list) -> dict:
     """
     evaluate the model to see if it is worthwhile to save the model
     """
-    true_positives = true_negatives =  0
+    true_positives = true_negatives = 0
     false_positives = false_negatives = 1e-8  # near 0 to avoid /0 $$ textcat.pipe(tokenizer(x[0])).cats['pos'],
     tokens, labels = zip(*map(lambda x: (tokenizer(x[0]), x[1]['cats']), test_data))
     for score, true_label in zip([i.cats['pos'] for i in textcat.pipe(tokens)], labels):
@@ -135,25 +152,17 @@ def evaluate_model(tokenizer: Tokenizer, textcat: Morphologizer, test_data: list
     f_score = 2 * (precision * recall) / (precision + recall) if precision + recall else 0
     return {"precision": precision, "recall": recall, "f-score": f_score}
 
-def write_data_to_csv(data: dict, loss: dict , count: int, csv_direc: str = 'models/sentiment/evaluations.csv') -> None:
-    
-    new_row = [count, loss['textcat'], data['precision'], data['recall'], data['f-score']]
-    if not count:
-        fields = ["MODEL NUMBER", "LOSS", "PRECISION", "RECALL", "F-SCORE"]
-        with open(csv_direc, 'w', newline='') as csvfile:
-            csvwriter = csv.writer(csvfile)
-            csvwriter.writerow(fields)
-            csvwriter.writerow(new_row)
-    else:
-        with open(csv_direc, 'a', newline='') as csvfile:
-            csvwriter = csv.writer(csvfile)
-            csvwriter.writerow(new_row)
-
 
 if __name__ == "__main__":
-    True
     # Uncomment to retrain models
     # DISCLAIMER: takes hours and overwrites other files
     # data = grab_training_data(True)
     # train_model(data[0], data[1], 25)
+
+    # python-ta
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 120,  # 100 was too short for nested code sections
+        'disable': ['R1705', 'C0200']
+    })
     
