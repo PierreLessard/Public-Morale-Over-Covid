@@ -1,5 +1,6 @@
+"""file containing functions to operate sentiment model"""
 import spacy
-from pathlib import Path
+
 
 def predict_sentiment(txt: str, direc: str = 'models/sentiment/saved_models/model50') -> float:
     """
@@ -13,12 +14,13 @@ def predict_sentiment(txt: str, direc: str = 'models/sentiment/saved_models/mode
     Aproaching 1 being a positive sentiment
     """
     vals = spacy.load(direc)(txt).cats
-    return vals["pos"] if vals["pos"]>vals["neg"] else -1*vals["neg"]
+    return vals["pos"] if vals["pos"] > vals["neg"] else -1 * vals["neg"]
 
 
 def open_model(direc: str = 'models/sentiment/saved_models/model50'):
     """opens model from optional directory string"""
     return spacy.load(direc)
+
 
 def model_predict_sentiment(model, txt: str) -> float:
     """
@@ -30,11 +32,19 @@ def model_predict_sentiment(model, txt: str) -> float:
     Aproaching 1 being a positive sentiment
     """
     vals = model(txt).cats
-    return vals["pos"] if vals["pos"]>vals["neg"] else -1*vals["neg"]
+    return vals["pos"] if vals["pos"] > vals["neg"] else -1 * vals["neg"]
+
 
 if __name__ == "__main__":
-    """Test Area"""
+    # Test Area
     model = open_model()
     txt = """should output same number"""
-    print(model_predict_sentiment(model,txt))
+    print(model_predict_sentiment(model, txt))
     print(predict_sentiment(txt))
+
+    # python-ta
+    import python_ta
+    python_ta.check_all(config={
+    'max-line-length': 100,
+    'disable': ['R1705', 'C0200']
+    })

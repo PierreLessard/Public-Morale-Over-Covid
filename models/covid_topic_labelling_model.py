@@ -122,3 +122,4 @@ if __name__ == '__main__':
     'max-line-length': 120,  # 100 is tyranny Mr. or Ms. TA 
     'disable': ['R1705', 'C0200']
     })
+    
