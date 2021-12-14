@@ -1,17 +1,11 @@
-import numpy as np
-import pandas as pd
-from pandas.core.frame import DataFrame
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.decomposition import LatentDirichletAllocation as LDA
+"""code structure taken from """
 import pickle
-import spacy
 from spacy.tokens import Token
 from spacy.lang.en import English as Parser
 import nltk
 nltk.download('wordnet')
 nltk.download('stopwords')
 from nltk.corpus import wordnet as wn
-from random import random
 import gensim
 from gensim import corpora
 from typing import Optional
@@ -105,11 +99,10 @@ if __name__ == '__main__':
     txt = """Covid is so common, Everyone is positive with covid-19
     The president is a patient and is contagious, the symptoms are bad
     omicron is coming to the world they say. I have to get a test for my flight"""
-    txt2 = """Leetcode is fun but I gotta say this it does suck up my time
-    I find myself avoiding coding for my cs final project by instead coding
-    useless algorithms on a site filled with questions about useless algorithms"""
+    txt2 = """The Toronto maple leafs are currently playing like the 
+    Toronto Maple Leafs, good for them, bad for Toronto"""
     dct, model = load_model()
-    print(predict_covid_label(txt, model, dct))
-    print(predict_covid_label(txt2, model, dct))
+    print(predict_covid_label(txt, model, dct)) # should return high percentage
+    print(predict_covid_label(txt2, model, dct)) # should return low percentage
 
         
