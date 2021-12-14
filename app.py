@@ -1,21 +1,18 @@
 """Data visualization using Dash and plotly express: https://dash.plotly.com"""
+import time
+import datetime
+from typing import Any
 import plotly.express as px
 import dash
-import time
-
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
+import dash_daq as daq
 from util import data_loading
 from util import graph_updater
 
 # Using dbc for specific components: https://dash-bootstrap-components.opensource.faculty.ai
-import dash_bootstrap_components as dbc
-import dash_daq as daq
-import datetime
-
-import pandas as pd
-import logging
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP,
                                                 data_loading.read_style_sheet()],)
@@ -30,6 +27,8 @@ data_sets = data_loading.get_data()
 def row_builder(row_number: int) -> dbc.Row:
     """
     Builds a standard row based on row_number
+
+    Returns a dbc.Row object wi
     """
     return html.Div([
         dbc.Row(
@@ -75,7 +74,7 @@ def row_builder(row_number: int) -> dbc.Row:
                 html.Br(),
                 dbc.Col(
                     children=[
-                        html.P("Date Selection", 
+                        html.P("Date Selection",
                                className="general_text"),
                         html.Div(
                             id='date-select-div',
@@ -85,12 +84,14 @@ def row_builder(row_number: int) -> dbc.Row:
                                     className='date-select',
                                     minimum_nights=10,
                                     calendar_orientation='horizontal',
-                                    min_date_allowed=datetime.datetime(2020, 1, 1),
-                                    max_date_allowed=datetime.datetime(2021, 12, 31),
+                                    min_date_allowed=datetime.datetime(
+                                        2020, 1, 1),
+                                    max_date_allowed=datetime.datetime(
+                                        2021, 12, 31),
                                     start_date=datetime.datetime(2020, 6, 1),
                                     end_date=datetime.datetime(2021, 1, 1)
-                                    )
-                                ]
+                                )
+                            ]
                         ),
                     ],
                 ),
@@ -157,20 +158,19 @@ app.layout = html.Div(
                             className="intro_text",
                             children=[
                                 html.H5(
-                                    "This project uses machine learning to analyse the sentiments \
-                                    of the public with respect to new daily cases."
+                                    "This project uses machine learning to analyse the \
+                                    sentiments of the public with respect to new daily cases."
                                 ),
                                 html.H5(
-                                    "The data is collected from the comment sections from a wide \
-                                    range of sources, including news & social media comments"
+                                    "The data is collected from the comment sections from the\
+                                    New York Times, from Feburary 2020 to December 2021"
                                 ),
-                                html.H5(
-                                    "Select & configure multiple graphs \
-                                    at once to compare our findings"
-                                ),
-                                html.H5(['Github: ', html.A('https://github.com/PierreLessard/Public-Morale-Over-Covid',
-                                                            href='https://github.com/PierreLessard/Public-Morale-Over-Covid',
-                                                            style={'color': 'white'})]),
+                                html.H5(['Github: ',
+                                        html.A('https://github.com/PierreLessard\
+                                                /Public-Morale-Over-Covid',
+                                                href='https://github.com/PierreLessard\
+                                                /Public-Morale-Over-Covid',
+                                                style={'color': 'white'})]),
                                 html.Br(),
                             ],
                         ),
@@ -181,7 +181,7 @@ app.layout = html.Div(
                         children="Machine Learning Model Loss vs. Iteration"),
                 html.Div(
                     dbc.Row(className="row",
-                            children=[graph_updater.update_main_graph()],
+                            children=[graph_updater.update_main_graph(data_sets)],
                             id="main-graph-container"),
                     className='row-div'
                 ),
@@ -207,23 +207,26 @@ app.layout = html.Div(
         Input("historic-1", "value"),
     ],
 )
-def update_graph(start_date: str, end_date: str, moving_avg: bool, historic: bool) -> tuple[px.line, px.bar]:
+def update_graph(start_date: str, end_date: str,
+                 moving_avg: bool, historic: bool) -> tuple[px.line, px.line]:
     """A generic function that can be used to update all graphs based on user input
     Graphs are generated with util.graph_updater.generate_graph, which returns
     two plotly.express.line objects representing New Cases vs. Time and Sentiment vs. Time.
     The range of the data is from start_date to end_date
     Based on moving_avg and historic, traces of 7 day moving average and historical cases
     are added onto the graph.
-    Returns a tuple containing the titile of the new graph and the new graphs
+    Returns a tuple containing the titile of the new graphs, and the new graph figures
     """
-    title_A = "New Cases vs. Time"
-    title_B = "Sentiment vs. Time"
-    graph_A, graph_B = graph_updater.generate_graph(data_sets, 
-                                                        datetime.datetime.fromisoformat(start_date), 
-                                                        datetime.datetime.fromisoformat(end_date),
-                                                        moving_avg,
-                                                        historic,)
-    return title_A, title_B, graph_A, graph_B
+    title_a = "New Cases vs. Time"
+    title_b = "Sentiment vs. Time"
+    graph_a, graph_b = graph_updater.generate_graph(data_sets,
+                                                    datetime.datetime.fromisoformat(
+                                                        start_date),
+                                                    datetime.datetime.fromisoformat(
+                                                        end_date),
+                                                    moving_avg,
+                                                    historic,)
+    return title_a, title_b, graph_a, graph_b
 
 
 @app.callback(
@@ -235,11 +238,16 @@ def update_graph(start_date: str, end_date: str, moving_avg: bool, historic: boo
         Input("historic-1", "value"),
     ],
 )
-def load_output_1(a, b, c, d) -> None:
-    """Animates the loading symbol"""
-    time.sleep(1)
+def load_output_1(a: Any, b: Any, c: Any, d: Any) -> None:
+    """
+    Animates the loading symbol
+    """
+    if a or b or c or d:
+        time.sleep(1)
 
 
 def run_app() -> None:
-    """Runs the app"""
+    """
+    Runs the app
+    """
     app.run_server(debug=True)
