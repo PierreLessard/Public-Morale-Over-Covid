@@ -4,3 +4,4 @@ data/training/aclImdb
 models/sentiment/models
 discord_bot.py
 __pycache__
+.idea
