@@ -89,6 +89,14 @@ def predict_covid_label(txt: str, model, dct) -> float:
 
     return reduce(lambda x,y: x+y[1], model.get_document_topics(dct.doc2bow(tokenized_txt))[-2:], 0)
     
+def load_and_predict(txt: str, direc: Optional[str] = None) -> float:
+    """
+    Function that combines the loading and predicting
+    Not recommended to use on lots of data as ineffecient
+    """
+    dct, model = load_model() if not direc else load_model(direc)
+    return predict_covid_label(txt, model, dct)
+
 
 if __name__ == '__main__':
     """Trianing Section
@@ -104,5 +112,6 @@ if __name__ == '__main__':
     dct, model = load_model()
     print(predict_covid_label(txt, model, dct)) # should return high percentage
     print(predict_covid_label(txt2, model, dct)) # should return low percentage
+    print(load_and_predict(txt))
 
         
