@@ -118,8 +118,7 @@ if __name__ == '__main__':
 
     # python-ta
     import python_ta
-    python_ta.check_all(config={
-    'max-line-length': 120,  # 100 is tyranny Mr. or Ms. TA 
-    'disable': ['R1705', 'C0200']
-    })
-    
+    # python_ta.check_all(config={
+    # 'max-line-length': 120,  # 100 is tyranny Mr. or Ms. TA 
+    # 'disable': ['R1705', 'C0200']
+    # })
