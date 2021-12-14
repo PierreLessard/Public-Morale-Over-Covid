@@ -3,8 +3,6 @@ import pickle
 from spacy.tokens import Token
 from spacy.lang.en import English as Parser
 import nltk
-nltk.download('wordnet')
-nltk.download('stopwords')
 from nltk.corpus import wordnet as wn
 import gensim
 from gensim import corpora
@@ -76,6 +74,8 @@ def load_model(direc: str = 'models/covid_topic_labelling'):
     loads model from direc
     returns (dicitonary,model)
     """
+    nltk.download('wordnet')
+    nltk.download('stopwords')
     return(gensim.corpora.Dictionary.load(f'{direc}/dictionary.gensim'),gensim.models.ldamodel.LdaModel.load(f'{direc}/model.gensim'))
 
 def predict_covid_label(txt: str, model, dct) -> float:
